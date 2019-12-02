@@ -1,0 +1,174 @@
+<div v-if="table">
+    <v-card class="elevation-0">
+        <v-card-title>
+            <span v-if="table.options.hasOwnProperty('title')">{{table.options.title}}</span>
+            <div class="flex-grow-1"></div>
+            <v-text-field v-if="search !== '<default>'"
+                          v-model="syncedSearch"
+                          append-icon="mdi-magnify"
+                          class="table-search"
+                          label="Search"
+                          single-line
+                          hide-details
+            />
+        </v-card-title>
+        <v-data-table
+                :headers="table.headers"
+                :items="items"
+                :search="search !== '<default>' ? syncedSearch : ''"
+                :hide-default-header="!(table.options.hasOwnProperty('hideDefaultHeader') && !table.options.hideDefaultHeader)"
+                :options.sync="table.options"
+                :loading="!!items && !items.length > 0"
+        >
+
+            <!-- header -->
+            <template v-if="!(table.options.hasOwnProperty('hideDefaultHeader') && !table.options.hideDefaultHeader)"
+                      v-slot:header="{ props: { headers } }">
+                <thead class="v-data-table-header">
+                <tr>
+                    <template v-for="header in headers">
+                        <th :key="header.text"
+                            :class="[!!!header.sortable ? 'sortable' : '', table.options.sortBy.includes(header.value) ? 'active' : '', `text-${header.align}` ]"
+                            @click="changeSort(header)"
+                            :width="header.hasOwnProperty('width') ? header.width : ''"
+                        >
+                            <v-tooltip bottom :disabled="!header.description">
+                                <template v-slot:activator="{ on }">
+                                    <div v-on="on">
+                                        {{ header.text }}
+                                        <v-icon small v-if="!!!header.sortable && isSortDesc(header) > 0"
+                                                class="v-data-table-header__icon">
+                                            {{`mdi-arrow-${isSortDesc(header) == 1 ? 'up' : 'down'}`}}
+                                        </v-icon>
+                                        <span v-if="!!!header.sortable && isSortDesc(header) > 0 && isSortPosition(header) >= 0 && table.options.sortBy.length > 1"
+                                              class="v-data-table-header__sort-badge">{{isSortPosition(header) + 1}}</span>
+                                    </div>
+                                </template>
+                                <span>{{ header.description }}</span>
+                            </v-tooltip>
+                        </th>
+                    </template>
+                </tr>
+                </thead>
+            </template>
+
+            <!-- columns -->
+            <template v-slot:item="slotProps">
+                <tr :key="slotProps.index">
+                    <template v-for="(header, idx) in table.headers">
+
+                        <!-- formatDate -->
+                        <td v-if="header.cellType === 'date-time'" :align="header.align" :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+                            {{ slotProps.item[header.value] | formatDate }}
+                        </td>
+
+                        <!-- action -->
+                        <td v-else-if="header.cellType === 'action'" :align="header.align" :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+                            <template v-for="(path, j) in header.cellFormel">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn :key="`${slotProps.index}_${idx}_${j}`" v-on="on" text icon
+                                               @click="executeItem(path[1], slotProps.item)">
+                                            <v-icon>{{`${path[2]}`}}</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>{{ path[0] }}</span>
+                                </v-tooltip>
+                            </template>
+                        </td>
+
+                        <!-- router link -->
+                        <router-link tag="td" v-else-if="header.cellType === 'link'"
+                                     :align="header.align"
+                                     style="cursor: pointer;"
+                                     :class="header.class"
+                                     :key="`${slotProps.index}_${idx}`"
+                                     :to="`${slotProps.item[header.cellFormel[2]]}` | replaceTemplate(header.cellFormel)">
+                            <span class="link-none">{{ `${slotProps.item[header.cellFormel[3]]}` }}</span>
+                        </router-link>
+
+                        <!-- boolean -->
+                        <td v-else-if="header.cellType === 'boolean'" :align="header.align" :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+
+                                    <v-icon v-on="on">{{!!slotProps.item[header.value] ? header.cellFormel[2] :
+                                        header.cellFormel[3]
+                                        }}
+                                    </v-icon>
+                                </template>
+                                <span>{{ !!slotProps.item[header.value] ? header.cellFormel[0] : header.cellFormel[1] }}</span>
+                            </v-tooltip>
+                        </td>
+
+                        <!-- links of a group -->
+                        <!-- ['mailto:{eMail}', '{eMail}', 'eMail', 'eMail', 'mdi-email-outline'] -->
+                        <td v-else-if="header.cellType === 'btn-link-group'" :align="header.align" :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+
+                            <template v-for="(path, i) in header.cellFormel">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn :key="`${slotProps.index}_${idx}_${i}`" v-on="on" text icon
+                                               :disabled="!!!slotProps.item[path[3]]"
+                                               :href="`${slotProps.item[path[2]]}` | replaceTemplate(path)"
+                                               target="_blank">
+                                            <v-icon>{{path[4]}}</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>{{ slotProps.item[path[3]] }}</span>
+                                </v-tooltip>
+                            </template>
+                        </td>
+
+
+                        <td v-else-if="header.cellType === 'function-tooltip'" :align="header.align"
+                            :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <div v-on="on">{{ slotProps.item[header.value] }}</div>
+                                </template>
+                                <span>{{ header.cellFormel[slotProps.item[header.value]] }}</span>
+                            </v-tooltip>
+                        </td>
+
+                        <td v-else :align="header.align" :class="header.class" :key="`${slotProps.index}_${idx}`">
+                            {{ slotProps.item[header.value] }}
+                        </td>
+
+                    </template>
+                </tr>
+            </template>
+
+            <!-- body append -->
+            <template v-if="table.hasOwnProperty('bodyAppend') && table.bodyAppend" v-slot:body.append>
+                <tr>
+                    <template v-for="(head, idx) in table.headers">
+                        <td>
+                            <!-- not yet implemented -->
+                        </td>
+                    </template>
+                </tr>
+            </template>
+
+            <!-- footer -->
+            <template v-if="table.hasOwnProperty('footer') && table.footer" v-slot:footer>
+                <div :class="`${table.footer.class}`" v-text="table.footer.text"></div>
+            </template>
+
+            <template v-slot:no-data>
+                No {{table.title}} found.
+            </template>
+
+            <template v-slot:no-results>
+                No {{table.title}} matches the search parameters.
+            </template>
+
+        </v-data-table>
+    </v-card>
+</div>
