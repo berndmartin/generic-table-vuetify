@@ -29,7 +29,7 @@ export interface GenericTableHeader {
   class?: string[] | string;
   width?: string;
   cellType?: GenericTableCellType;
-  cellFormel?: string[][] | string[] | string | object;
+  cellFormula?: string[][] | string[] | string | object;
 }
 
 export type GenericTableHeaders = GenericTableHeader[];
@@ -42,10 +42,7 @@ export interface GenericTableFooter {
 export enum GenericTableCellType {
   Action = 'action',
   Boolean = 'boolean',
-  DateTime = 'date-time',
-  Link = 'link',
-  BtnLinkGroup = 'btn-link-group',
-  FunctionTooltip = 'function-tooltip'
+  Link = 'link'
 }
 
 export enum GenericTableBodyAppendType {
@@ -57,7 +54,7 @@ export interface GenericTableBodyAppend {
   text: string;
   value: string;
   bodyType: GenericTableBodyAppendType;
-  bodyFormel?: string[][] | string[] | string | object;
+  bodyFormula?: string[][] | string[] | string | object;
 }
 
 export type GenericTableBodyAppends = GenericTableBodyAppend[];

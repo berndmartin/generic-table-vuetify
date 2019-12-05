@@ -3,6 +3,7 @@ import Component from 'vue-class-component';
 import { Watch } from 'vue-property-decorator';
 import { GenericTable } from '@/components/generic-table';
 import exampleTableService from '@/components/example-table.service';
+import { GenericTableCellType } from '@/components/generic-table/generic-table.types';
 
 @Component({
   components: {
@@ -21,8 +22,14 @@ export default class ExampleTableComponent extends Vue {
         align: 'left',
         sortable: false,
         value: 'name',
+        cellType: GenericTableCellType.Link,
+        cellFormula: ['recipe', 'name', 'recipe'],
       },
-      { text: 'Calories', value: 'calories' },
+      {
+        text: 'Calories',
+        value: 'calories',
+        description: '[kcal]',
+      },
       { text: 'Fat (g)', value: 'fat' },
       { text: 'Carbs (g)', value: 'carbs' },
       { text: 'Protein (g)', value: 'protein' },

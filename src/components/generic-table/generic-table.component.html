@@ -57,16 +57,10 @@
                 <tr :key="slotProps.index">
                     <template v-for="(header, idx) in table.headers">
 
-                        <!-- formatDate -->
-                        <td v-if="header.cellType === 'date-time'" :align="header.align" :class="header.class"
-                            :key="`${slotProps.index}_${idx}`">
-                            {{ slotProps.item[header.value] | formatDate }}
-                        </td>
-
                         <!-- action -->
-                        <td v-else-if="header.cellType === 'action'" :align="header.align" :class="header.class"
+                        <td v-if="header.cellType === 'action'" :align="header.align" :class="header.class"
                             :key="`${slotProps.index}_${idx}`">
-                            <template v-for="(path, j) in header.cellFormel">
+                            <template v-for="(path, j) in header.cellFormula">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn :key="`${slotProps.index}_${idx}_${j}`" v-on="on" text icon
@@ -79,15 +73,23 @@
                             </template>
                         </td>
 
-                        <!-- router link -->
-                        <router-link tag="td" v-else-if="header.cellType === 'link'"
-                                     :align="header.align"
-                                     style="cursor: pointer;"
-                                     :class="header.class"
-                                     :key="`${slotProps.index}_${idx}`"
-                                     :to="`${slotProps.item[header.cellFormel[2]]}` | replaceTemplate(header.cellFormel)">
-                            <span class="link-none">{{ `${slotProps.item[header.cellFormel[3]]}` }}</span>
-                        </router-link>
+                        <!-- link -->
+                        <td v-else-if="header.cellType === 'link'" :align="header.align"
+                            :class="header.class"
+                            :key="`${slotProps.index}_${idx}`">
+
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <a v-on="on"
+                                           :href="`${slotProps.item[header.cellFormula[0]]}`"
+                                           target="_blank">
+                                        {{slotProps.item[header.cellFormula[1]]}}
+                                    </a>
+                                </template>
+                                <span>{{ slotProps.item[header.cellFormula[2]] }}</span>
+                            </v-tooltip>
+                        </td>
+
 
                         <!-- boolean -->
                         <td v-else-if="header.cellType === 'boolean'" :align="header.align" :class="header.class"
@@ -95,45 +97,12 @@
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on }">
 
-                                    <v-icon v-on="on">{{!!slotProps.item[header.value] ? header.cellFormel[2] :
-                                        header.cellFormel[3]
+                                    <v-icon v-on="on">{{!!slotProps.item[header.value] ? header.cellFormula[2] :
+                                        header.cellFormula[3]
                                         }}
                                     </v-icon>
                                 </template>
-                                <span>{{ !!slotProps.item[header.value] ? header.cellFormel[0] : header.cellFormel[1] }}</span>
-                            </v-tooltip>
-                        </td>
-
-                        <!-- links of a group -->
-                        <!-- ['mailto:{eMail}', '{eMail}', 'eMail', 'eMail', 'mdi-email-outline'] -->
-                        <td v-else-if="header.cellType === 'btn-link-group'" :align="header.align" :class="header.class"
-                            :key="`${slotProps.index}_${idx}`">
-
-                            <template v-for="(path, i) in header.cellFormel">
-                                <v-tooltip bottom>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn :key="`${slotProps.index}_${idx}_${i}`" v-on="on" text icon
-                                               :disabled="!!!slotProps.item[path[3]]"
-                                               :href="`${slotProps.item[path[2]]}` | replaceTemplate(path)"
-                                               target="_blank">
-                                            <v-icon>{{path[4]}}</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>{{ slotProps.item[path[3]] }}</span>
-                                </v-tooltip>
-                            </template>
-                        </td>
-
-
-                        <td v-else-if="header.cellType === 'function-tooltip'" :align="header.align"
-                            :class="header.class"
-                            :key="`${slotProps.index}_${idx}`">
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on }">
-                                    <div v-on="on">{{ slotProps.item[header.value] }}</div>
-                                </template>
-                                <span>{{ header.cellFormel[slotProps.item[header.value]] }}</span>
+                                <span>{{ !!slotProps.item[header.value] ? header.cellFormula[0] : header.cellFormula[1] }}</span>
                             </v-tooltip>
                         </td>
 
