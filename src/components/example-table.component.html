@@ -1,0 +1,21 @@
+<div id="app">
+    <v-app id="desert">
+
+        <!-- default v-data-table
+        <v-data-table
+                :headers="table.headers"
+                :items="desserts"
+                :sort-by="['calories', 'fat']"
+                :sort-desc="[false, true]"
+                multi-sort
+                class="elevation-1"
+        ></v-data-table>
+        -->
+
+        <generic-table-component
+                :search="search"
+                :table="table"
+                :items="desserts" />
+
+    </v-app>
+</div>
